@@ -23,6 +23,11 @@ pub struct Cli {
 pub enum Command {
     /// Initialize the repository directories without deleting existing data.
     Init,
+    /// Manage Cards.
+    Card {
+        #[command(subcommand)]
+        command: super::card::CardCommand,
+    },
     /// Manage Work logs.
     Work {
         #[command(subcommand)]

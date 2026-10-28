@@ -92,6 +92,31 @@ fn encode_card(path: &Path, card: &Card) -> Result<Vec<u8>> {
 }
 
 impl Repository {
+    /// Enumerate Cards by valid filenames, validating each on load.
+    /// Unexpected extensions are ignored; invalid JSON is an error.
+    pub fn list_cards(&self) -> Result<Vec<Card>> {
+        let directory = self.root().join("cards");
+        let entries =
+            std::fs::read_dir(&directory).map_err(|error| super::io_at(&directory, error))?;
+        let mut cards = Vec::new();
+        for entry in entries {
+            let entry = entry.map_err(|error| super::io_at(&directory, error))?;
+            let path = entry.path();
+            if path.extension().and_then(|ext| ext.to_str()) != Some("json") {
+                continue;
+            }
+            let Some(id) = path
+                .file_stem()
+                .and_then(|stem| stem.to_str())
+                .and_then(|stem| stem.parse::<CardId>().ok())
+            else {
+                continue;
+            };
+            cards.push(self.load_card(&id)?.value);
+        }
+        cards.sort_by(|a, b| a.title.as_str().cmp(b.title.as_str()).then(a.id.cmp(&b.id)));
+        Ok(cards)
+    }
     /// Create a Card within a pre-existing Work. A newly created Card has
     /// identical `created` and `updated` timestamps.
     pub fn create_card(&self, card: Card) -> Result<Loaded<Card>> {

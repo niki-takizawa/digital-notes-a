@@ -1,6 +1,7 @@
 //! CLI dispatch. Entity commands are added in subsequent commits.
 
 pub mod args;
+mod card;
 mod editor;
 mod work;
 
@@ -16,6 +17,9 @@ pub fn run(cli: Cli) -> Result<(), Box<dyn Error>> {
     };
 
     match cli.command {
+        Command::Card { command } => {
+            card::run(&Repository::open(&root)?, command)?;
+        }
         Command::Work { command } => {
             work::run(&Repository::open(&root)?, command)?;
         }
