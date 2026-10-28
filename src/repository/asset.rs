@@ -5,12 +5,12 @@
 //! writes can leave an orphan HTML file. Commit 18's integrity scan will detect
 //! such leftovers. This is not a two-file atomic transaction.
 
-use super::{Loaded, Repository, RepositoryError, Result, Revision};
+use super::{Loaded, Repository, RepositoryError, Result, Revision, WriteGuard};
 use crate::model::{Asset, AssetId, UtcTimestamp};
 use sha2::{Digest, Sha256};
 use std::{collections::HashSet, fs, io::ErrorKind, path::Path};
 
-fn validate_asset(asset: &Asset) -> Result<()> {
+pub(super) fn validate_asset(asset: &Asset) -> Result<()> {
     if asset.updated < asset.created {
         return Err(RepositoryError::InvalidAsset(
             "updated must not precede created".to_owned(),
@@ -49,7 +49,7 @@ fn verify_html(asset: &Asset, html: &[u8]) -> Result<()> {
     Ok(())
 }
 
-fn encode_asset(path: &Path, asset: &Asset) -> Result<Vec<u8>> {
+pub(super) fn encode_asset(path: &Path, asset: &Asset) -> Result<Vec<u8>> {
     let mut bytes = serde_json::to_vec_pretty(asset).map_err(|source| RepositoryError::Json {
         path: path.to_owned(),
         source,
@@ -86,6 +86,16 @@ impl Repository {
     /// On interruption, an orphan HTML may remain and must be diagnosed.
     pub fn create_asset_pair(&self, asset: Asset, html: &[u8]) -> Result<Loaded<Asset>> {
         let guard = self.begin_write()?;
+        self.create_asset_pair_locked(&guard, asset, html)
+    }
+
+    /// Shared with capture publication: the caller already owns the write lock.
+    pub(super) fn create_asset_pair_locked(
+        &self,
+        guard: &WriteGuard<'_>,
+        asset: Asset,
+        html: &[u8],
+    ) -> Result<Loaded<Asset>> {
         validate_asset(&asset)?;
         if asset.created != asset.updated {
             return Err(RepositoryError::InvalidAsset(

@@ -23,6 +23,11 @@ pub struct Cli {
 pub enum Command {
     /// Initialize the repository directories without deleting existing data.
     Init,
+    /// Capture and browse Assets.
+    Asset {
+        #[command(subcommand)]
+        command: super::asset::AssetCommand,
+    },
     /// Manage Cards.
     Card {
         #[command(subcommand)]

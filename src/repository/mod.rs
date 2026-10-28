@@ -4,6 +4,7 @@
 //! validation and publication. Card operations are added in a later commit.
 
 mod asset;
+mod capture;
 mod card;
 mod references;
 mod storage;
@@ -17,6 +18,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+pub use capture::{CaptureOutcome, CaptureRequest};
 pub use references::{IntegrityIssue, IntegrityIssueKind};
 pub use storage::{LoadedBytes, Revision, WriteGuard};
 
