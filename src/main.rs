@@ -1,4 +1,5 @@
 mod cli;
+mod tui;
 
 use clap::Parser;
 use std::process::ExitCode;

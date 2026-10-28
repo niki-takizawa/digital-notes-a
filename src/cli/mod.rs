@@ -8,6 +8,7 @@ mod editor;
 mod evidence;
 mod work;
 
+use crate::tui;
 use args::{Cli, Command};
 use digital_notes::repository::Repository;
 use std::error::Error;
@@ -20,6 +21,9 @@ pub fn run(cli: Cli) -> Result<(), Box<dyn Error>> {
     };
 
     match cli.command {
+        Command::Tui => {
+            tui::run(&Repository::open(&root)?)?;
+        }
         Command::Asset { command } => {
             asset::run(&Repository::open(&root)?, command)?;
         }

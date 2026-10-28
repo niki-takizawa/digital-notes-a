@@ -29,6 +29,8 @@ pub enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// Browse Works, Assets and Cards in an interactive terminal.
+    Tui,
     /// Capture and browse Assets.
     Asset {
         #[command(subcommand)]

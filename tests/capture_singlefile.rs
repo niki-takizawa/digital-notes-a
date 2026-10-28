@@ -7,18 +7,36 @@ use digital_notes::{
 };
 use std::{
     fs,
-    os::unix::fs::PermissionsExt,
+    io::Write,
     path::{Path, PathBuf},
+    process::{Command, Stdio},
     time::Duration,
 };
 use tempfile::TempDir;
 
+// Write mock executables in a child process to avoid intermittent ETXTBSY
+// when parallel Rust tests spawn other processes on Linux.
+fn write_script(path: &Path, contents: &str) {
+    let mut writer = Command::new("/bin/sh")
+        .arg("-c")
+        .arg("cat > \"$1\" && chmod 700 \"$1\"")
+        .arg("sh")
+        .arg(path)
+        .stdin(Stdio::piped())
+        .spawn()
+        .unwrap();
+    writer
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(contents.as_bytes())
+        .unwrap();
+    assert!(writer.wait().unwrap().success());
+}
+
 fn executable(dir: &Path, script: &str) -> PathBuf {
     let path = dir.join("fake-single-file.sh");
-    fs::write(&path, format!("#!/bin/sh\nset -eu\n{script}\n")).unwrap();
-    let mut permissions = fs::metadata(&path).unwrap().permissions();
-    permissions.set_mode(0o700);
-    fs::set_permissions(&path, permissions).unwrap();
+    write_script(&path, &format!("#!/bin/sh\nset -eu\n{script}\n"));
     path
 }
 
@@ -89,21 +107,25 @@ fn empty_output_is_rejected() {
 fn text_and_non_utf8_are_rejected() {
     let temp = TempDir::new().unwrap();
     let mock = executable(temp.path(), r#"printf 'not html' > "$2""#);
-    assert!(matches!(
-        SingleFileCapture::new(mock.clone()).capture(&url("http://example.org/")),
-        Err(CaptureError::NotHtml)
-    ));
-    fs::write(
+
+    let result = SingleFileCapture::new(mock.clone()).capture(&url("http://example.org/"));
+    assert!(
+        matches!(&result, Err(CaptureError::NotHtml)),
+        "expected NotHtml, got: {result:?}"
+    );
+
+    write_script(
         &mock,
         r#"#!/bin/sh
 printf '\377' > "$2"
 "#,
-    )
-    .unwrap();
-    assert!(matches!(
-        SingleFileCapture::new(mock).capture(&url("http://example.org/")),
-        Err(CaptureError::InvalidUtf8)
-    ));
+    );
+
+    let result = SingleFileCapture::new(mock).capture(&url("http://example.org/"));
+    assert!(
+        matches!(&result, Err(CaptureError::InvalidUtf8)),
+        "expected InvalidUtf8, got: {result:?}"
+    );
 }
 
 #[test]
