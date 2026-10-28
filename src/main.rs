@@ -1,3 +1,14 @@
-fn main() {
-    println!("Hello, world!");
+mod cli;
+
+use clap::Parser;
+use std::process::ExitCode;
+
+fn main() -> ExitCode {
+    match cli::run(cli::args::Cli::parse()) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            eprintln!("error: {error}");
+            ExitCode::FAILURE
+        }
+    }
 }
