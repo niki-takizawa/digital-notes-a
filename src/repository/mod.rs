@@ -4,6 +4,7 @@
 //! validation and publication. Card operations are added in a later commit.
 
 mod asset;
+mod card;
 mod storage;
 mod work;
 
@@ -39,6 +40,7 @@ pub enum RepositoryError {
     Conflict(PathBuf),
     InvalidAsset(String),
     InvalidWork(String),
+    InvalidCard(String),
     Json {
         path: PathBuf,
         source: serde_json::Error,
@@ -56,6 +58,7 @@ impl fmt::Display for RepositoryError {
             Self::Conflict(path) => write!(f, "file changed since last read: {}", path.display()),
             Self::InvalidAsset(message) => write!(f, "invalid Asset: {message}"),
             Self::InvalidWork(message) => write!(f, "invalid Work: {message}"),
+            Self::InvalidCard(message) => write!(f, "invalid Card: {message}"),
             Self::Json { path, source } => {
                 write!(f, "invalid JSON at {}: {source}", path.display())
             }
