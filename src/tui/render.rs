@@ -1,6 +1,6 @@
-//! Rendering only. Navigation state and disk I/O live in other modules.
+//! Rendering only; all navigation and data access live in other modules.
 
-use super::state::App;
+use super::state::{App, View};
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
@@ -9,7 +9,6 @@ use ratatui::{
 };
 
 pub(super) fn draw(frame: &mut Frame<'_>, app: &App) {
-    let area = frame.area();
     let sections = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -17,7 +16,7 @@ pub(super) fn draw(frame: &mut Frame<'_>, app: &App) {
             Constraint::Min(0),
             Constraint::Length(2),
         ])
-        .split(area);
+        .split(frame.area());
 
     let tabs = Tabs::new(["Works", "Assets", "Cards"])
         .block(
@@ -33,66 +32,98 @@ pub(super) fn draw(frame: &mut Frame<'_>, app: &App) {
         );
     frame.render_widget(tabs, sections[0]);
 
-    if app.detail_open {
-        let detail = app
-            .selected_entry()
-            .map_or("No selection", |entry| entry.detail.as_str());
-        let panel = Paragraph::new(detail)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title(" Details (Esc to return) "),
-            )
-            .wrap(Wrap { trim: false })
-            .scroll((app.scroll, 0));
-        frame.render_widget(panel, sections[1]);
-    } else {
-        let main = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(42), Constraint::Percentage(58)])
-            .split(sections[1]);
-        let items = app
-            .catalog
-            .entries(app.kind)
-            .iter()
-            .map(|entry| ListItem::new(entry.label.as_str()))
-            .collect::<Vec<_>>();
-        let list = List::new(items)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title(format!(" {} ", app.kind.name())),
-            )
-            .highlight_symbol("› ")
-            .highlight_style(
-                Style::default()
-                    .fg(Color::Yellow)
-                    .add_modifier(Modifier::BOLD),
+    match app.view {
+        View::Detail => {
+            let detail = app
+                .selected_entry()
+                .map_or("No selection", |entry| entry.detail.as_str());
+            frame.render_widget(
+                Paragraph::new(detail)
+                    .block(Block::default().borders(Borders::ALL).title(" Details "))
+                    .wrap(Wrap { trim: false })
+                    .scroll((app.scroll, 0)),
+                sections[1],
             );
-        let mut state = ListState::default();
-        state.select(app.selected_index());
-        frame.render_stateful_widget(list, main[0], &mut state);
+        }
+        View::Related => {
+            let relations = app.related();
+            let items = relations
+                .iter()
+                .map(|item| ListItem::new(item.label.as_str()))
+                .collect::<Vec<_>>();
+            let list = List::new(items)
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .title(" Related entities (both directions) "),
+                )
+                .highlight_symbol("› ")
+                .highlight_style(
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                );
+            let mut state = ListState::default();
+            state.select((app.related_selected < relations.len()).then_some(app.related_selected));
+            frame.render_stateful_widget(list, sections[1], &mut state);
+        }
+        View::Browse => {
+            let main = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([Constraint::Percentage(42), Constraint::Percentage(58)])
+                .split(sections[1]);
+            let matches = app.matches();
+            let items = matches
+                .iter()
+                .map(|entry| ListItem::new(entry.label.as_str()))
+                .collect::<Vec<_>>();
+            let list = List::new(items)
+                .block(Block::default().borders(Borders::ALL).title(format!(
+                    " {} ({}) ",
+                    app.kind.name(),
+                    matches.len()
+                )))
+                .highlight_symbol("› ")
+                .highlight_style(
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                );
+            let mut state = ListState::default();
+            state.select(app.selected_index());
+            frame.render_stateful_widget(list, main[0], &mut state);
 
-        let preview = app
-            .selected_entry()
-            .map_or("No entries yet", |entry| entry.detail.as_str());
-        frame.render_widget(
-            Paragraph::new(preview)
-                .block(Block::default().borders(Borders::ALL).title(" Preview "))
-                .wrap(Wrap { trim: false }),
-            main[1],
-        );
+            let preview = app
+                .selected_entry()
+                .map_or("No matching entries", |entry| entry.detail.as_str());
+            frame.render_widget(
+                Paragraph::new(preview)
+                    .block(Block::default().borders(Borders::ALL).title(" Preview "))
+                    .wrap(Wrap { trim: false }),
+                main[1],
+            );
+        }
     }
 
-    let hint = if app.detail_open {
-        "q quit | ↑↓/jk scroll | Esc back | Tab switch | r reload"
+    let hint = if let Some(draft) = &app.search_draft {
+        format!("/{draft}  | Enter search · Esc cancel · Backspace delete")
     } else {
-        "q quit | 1/2/3 or Tab switch | ↑↓/jk select | Enter details | r reload"
+        let controls = match app.view {
+            View::Browse => "1/2/3 Tab kind | ↑↓ select | Enter details",
+            View::Detail => "↑↓ scroll | g relations | b back | Esc list",
+            View::Related => "↑↓ choose | Enter follow | Esc details",
+        };
+        let search = if app.query.is_empty() {
+            String::new()
+        } else {
+            format!(" | search: {}", app.query)
+        };
+        format!("q quit | / search | r reload | {controls}{search}")
     };
     let footer = if app.message.is_empty() {
-        hint.to_owned()
+        hint
     } else {
-        // Errors are generated from local paths and must also be terminal-safe.
+        // Repository errors may contain paths: remove terminal controls.
         format!(
             "{hint} | {}",
             app.message
@@ -114,11 +145,17 @@ mod tests {
     use ratatui::{Terminal, backend::TestBackend};
 
     #[test]
-    fn empty_repositories_render_at_standard_and_small_terminal_sizes() {
-        let app = App::new(Catalog::default());
-        for (width, height) in [(80, 24), (30, 8), (8, 3)] {
-            let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
-            terminal.draw(|frame| draw(frame, &app)).unwrap();
+    fn all_views_render_on_small_terminals() {
+        let mut app = App::new(Catalog::default());
+        for view in [View::Browse, View::Detail, View::Related] {
+            app.view = view;
+            for (width, height) in [(80, 24), (30, 8), (8, 3)] {
+                let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+                terminal.draw(|frame| draw(frame, &app)).unwrap();
+            }
         }
+        app.search_draft = Some("research".into());
+        let mut terminal = Terminal::new(TestBackend::new(30, 8)).unwrap();
+        terminal.draw(|frame| draw(frame, &app)).unwrap();
     }
 }
