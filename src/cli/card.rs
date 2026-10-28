@@ -62,6 +62,11 @@ pub enum CardCommand {
         #[arg(long = "type")]
         kind: Option<String>,
     },
+    /// Register, inspect and verify quoted Evidence.
+    Evidence {
+        #[command(subcommand)]
+        command: super::evidence::EvidenceCommand,
+    },
     /// Add/remove Work, Asset or Card source references.
     Source {
         #[command(subcommand)]
@@ -292,6 +297,7 @@ pub fn run(repo: &Repository, command: CardCommand) -> Result<()> {
             })?;
             println!("Updated: {}", saved.value.title);
         }
+        CardCommand::Evidence { command } => super::evidence::run(repo, command)?,
         CardCommand::Source { command } => change_source(repo, command)?,
     }
     Ok(())

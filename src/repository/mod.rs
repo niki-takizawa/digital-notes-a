@@ -6,6 +6,7 @@
 mod asset;
 mod capture;
 mod card;
+mod evidence;
 mod references;
 mod storage;
 mod work;

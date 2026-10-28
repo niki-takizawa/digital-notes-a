@@ -4,6 +4,7 @@ pub mod args;
 mod asset;
 mod card;
 mod editor;
+mod evidence;
 mod work;
 
 use args::{Cli, Command};
