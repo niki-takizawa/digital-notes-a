@@ -8,6 +8,8 @@ use digital_notes::repository::Repository;
 pub(super) enum Action {
     Continue,
     Refresh,
+    BeginEvidence,
+    SaveEvidence,
     Quit,
 }
 
@@ -16,6 +18,7 @@ pub(super) enum View {
     Browse,
     Detail,
     Related,
+    Evidence,
 }
 
 #[derive(Debug)]
@@ -30,6 +33,7 @@ pub(super) struct App {
     pub(super) search_draft: Option<String>,
     pub(super) related_selected: usize,
     history: Vec<(Kind, String)>,
+    pub(super) evidence_form: Option<super::evidence::Form>,
 }
 
 impl App {
@@ -45,6 +49,7 @@ impl App {
             search_draft: None,
             related_selected: 0,
             history: Vec::new(),
+            evidence_form: None,
         }
     }
 
@@ -118,6 +123,9 @@ impl App {
         if key.modifiers.contains(KeyModifiers::CONTROL) && key.code == KeyCode::Char('c') {
             return Action::Quit;
         }
+        if self.view == View::Evidence {
+            return self.evidence_key(key);
+        }
         if self.search_draft.is_some() {
             self.handle_search(key);
             return Action::Continue;
@@ -131,7 +139,7 @@ impl App {
             }
             KeyCode::Esc => {
                 self.view = match self.view {
-                    View::Related => View::Detail,
+                    View::Related | View::Evidence => View::Detail,
                     _ => View::Browse,
                 };
                 self.scroll = 0;
@@ -165,6 +173,9 @@ impl App {
                 }
                 Action::Continue
             }
+            KeyCode::Char('e') if self.view == View::Detail && self.kind == Kind::Card => {
+                Action::BeginEvidence
+            }
             KeyCode::Char('g') if self.view == View::Detail => {
                 self.view = View::Related;
                 self.related_selected = 0;
@@ -177,6 +188,7 @@ impl App {
             KeyCode::Down | KeyCode::Char('j') => {
                 match self.view {
                     View::Detail => self.scroll = self.scroll.saturating_add(1),
+                    View::Evidence => {}
                     View::Related => {
                         let count = self.related().len();
                         if count > 0 {
@@ -196,6 +208,7 @@ impl App {
             KeyCode::Up | KeyCode::Char('k') => {
                 match self.view {
                     View::Detail => self.scroll = self.scroll.saturating_sub(1),
+                    View::Evidence => {}
                     View::Related => {
                         self.related_selected = self.related_selected.saturating_sub(1)
                     }

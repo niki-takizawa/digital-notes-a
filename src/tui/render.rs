@@ -33,6 +33,7 @@ pub(super) fn draw(frame: &mut Frame<'_>, app: &App) {
     frame.render_widget(tabs, sections[0]);
 
     match app.view {
+        View::Evidence => super::evidence::draw(frame, app, sections[1]),
         View::Detail => {
             let detail = app
                 .selected_entry()
@@ -105,13 +106,19 @@ pub(super) fn draw(frame: &mut Frame<'_>, app: &App) {
         }
     }
 
-    let hint = if let Some(draft) = &app.search_draft {
+    let hint = if app.view == View::Evidence {
+        super::evidence::controls(app).to_owned()
+    } else if let Some(draft) = &app.search_draft {
         format!("/{draft}  | Enter search · Esc cancel · Backspace delete")
     } else {
         let controls = match app.view {
             View::Browse => "1/2/3 Tab kind | ↑↓ select | Enter details",
+            View::Detail if app.kind == super::catalog::Kind::Card => {
+                "↑↓ scroll | g relations | e evidence | b back | Esc list"
+            }
             View::Detail => "↑↓ scroll | g relations | b back | Esc list",
             View::Related => "↑↓ choose | Enter follow | Esc details",
+            View::Evidence => super::evidence::controls(app),
         };
         let search = if app.query.is_empty() {
             String::new()

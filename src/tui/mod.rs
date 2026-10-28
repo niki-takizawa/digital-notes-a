@@ -1,6 +1,7 @@
-//! Read-only TUI entry point, designed to share Repository APIs with the CLI.
+//! TUI entry point, sharing Repository APIs with the CLI.
 
 mod catalog;
+mod evidence;
 mod render;
 mod state;
 
@@ -27,6 +28,8 @@ pub(super) fn run(repo: &Repository) -> Result<(), Box<dyn Error>> {
                 Event::Key(key) if key.kind == KeyEventKind::Press => match app.on_key(key) {
                     Action::Quit => break Ok(()),
                     Action::Refresh => app.refresh(repo),
+                    Action::BeginEvidence => app.begin_evidence(repo),
+                    Action::SaveEvidence => app.save_evidence(repo),
                     Action::Continue => {}
                 },
                 _ => {}
