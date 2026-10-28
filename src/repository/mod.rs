@@ -5,6 +5,7 @@
 
 mod asset;
 mod card;
+mod references;
 mod storage;
 mod work;
 
@@ -16,6 +17,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+pub use references::{IntegrityIssue, IntegrityIssueKind};
 pub use storage::{LoadedBytes, Revision, WriteGuard};
 
 /// A decoded entity together with the revision required for safe updates.
