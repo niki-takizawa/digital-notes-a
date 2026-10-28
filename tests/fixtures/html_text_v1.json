@@ -1,0 +1,32 @@
+[
+  {
+    "name": "entities_and_blocks",
+    "html": "<html><body><p>AI&nbsp;research</p><p>improved retrieval.</p></body></html>",
+    "expected": "AI research improved retrieval."
+  },
+  {
+    "name": "no_space_between_inline_nodes",
+    "html": "<body><p>Inter<strong>operable</strong></p></body>",
+    "expected": "Interoperable"
+  },
+  {
+    "name": "exclude_script_and_hidden",
+    "html": "<body><div>alpha<script>alert(1)</script><span hidden>SECRET</span> beta</div></body>",
+    "expected": "alpha beta"
+  },
+  {
+    "name": "br_and_whitespace",
+    "html": "<body><p> A\t\nB<br> C </p></body>",
+    "expected": "A B C"
+  },
+  {
+    "name": "non_bmp",
+    "html": "<body><p>甲😀 乙</p></body>",
+    "expected": "甲😀 乙"
+  },
+  {
+    "name": "unicode_combining_unchanged",
+    "html": "<body><p>café</p></body>",
+    "expected": "café"
+  }
+]
