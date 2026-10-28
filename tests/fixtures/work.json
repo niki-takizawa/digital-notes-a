@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "work0001",
+  "entity_type": "work",
+  "title": "Collect research papers",
+  "created": "2026-10-28T10:00:00Z",
+  "updated": "2026-10-28T10:00:00Z",
+  "work_type": "source_collection",
+  "status": "active",
+  "source_work_ids": [],
+  "body": "## Search strategy\n"
+}

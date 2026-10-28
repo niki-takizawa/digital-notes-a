@@ -1,0 +1,4 @@
+# JSON Schema Draft 2020-12 contract tests (not a runtime dependency).
+jsonschema==4.26.0
+# Required for jsonschema FormatChecker date-time validation.
+rfc3339-validator==0.1.4

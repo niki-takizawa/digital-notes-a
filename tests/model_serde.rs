@@ -13,70 +13,15 @@ fn roundtrip<T: Serialize + DeserializeOwned + PartialEq + std::fmt::Debug>(valu
 }
 
 fn work() -> Value {
-    json!({
-        "schema_version": 1,
-        "id": "work0001",
-        "entity_type": "work",
-        "title": "Collect research papers",
-        "created": "2026-10-28T10:00:00Z",
-        "updated": "2026-10-28T10:00:00Z",
-        "work_type": "source_collection",
-        "status": "active",
-        "source_work_ids": [],
-        "body": "## Search strategy\n"
-    })
+    serde_json::from_str(include_str!("fixtures/work.json")).expect("work fixture")
 }
 
 fn asset() -> Value {
-    json!({
-        "schema_version": 1,
-        "id": "asset001",
-        "entity_type": "asset",
-        "title": "Example publication",
-        "created": "2026-10-28T10:10:00Z",
-        "updated": "2026-10-28T10:10:00Z",
-        "asset_type": "web_page",
-        "url": "https://example.org/paper",
-        "file_format": "html",
-        "capture_method": "singlefile",
-        "created_by_work_id": "work0001",
-        "related_work_ids": ["work0002"],
-        "content_hash": "a".repeat(64),
-        "hash_algorithm": "sha256"
-    })
+    serde_json::from_str(include_str!("fixtures/asset.json")).expect("asset fixture")
 }
 
 fn card() -> Value {
-    json!({
-        "schema_version": 1,
-        "id": "card0001",
-        "entity_type": "card",
-        "title": "Research notes",
-        "created": "2026-10-28T10:20:00Z",
-        "updated": "2026-10-28T10:20:00Z",
-        "card_type": "note",
-        "created_by_work_id": "work0001",
-        "source_work_ids": ["work0002"],
-        "source_asset_ids": ["asset001", "asset002"],
-        "source_card_ids": [],
-        "evidence": [{
-            "id": "ev1",
-            "asset_id": "asset001",
-            "text_normalization": "html_text_v1",
-            "selector": {
-                "type": "TextQuoteSelector",
-                "exact": "A quote",
-                "prefix": "Some ",
-                "suffix": " from the page"
-            },
-            "position_selector": {
-                "type": "TextPositionSelector",
-                "start": 5,
-                "end": 12
-            }
-        }],
-        "body": "A note with reference [^ev1]."
-    })
+    serde_json::from_str(include_str!("fixtures/card.json")).expect("card fixture")
 }
 
 #[test]

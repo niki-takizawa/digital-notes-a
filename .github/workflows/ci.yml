@@ -23,5 +23,12 @@ jobs:
       - name: Install Rust toolchain
         run: rustup toolchain install
 
+      - name: Install schema-test dependencies
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install --disable-pip-version-check -r requirements-schema.txt
+
       - name: Run quality gate
+        env:
+          SCHEMA_TEST_PYTHON: .venv/bin/python
         run: ./scripts/check.sh

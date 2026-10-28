@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "asset001",
+  "entity_type": "asset",
+  "title": "Example publication",
+  "created": "2026-10-28T10:10:00Z",
+  "updated": "2026-10-28T10:10:00Z",
+  "asset_type": "web_page",
+  "url": "https://example.org/paper",
+  "file_format": "html",
+  "capture_method": "singlefile",
+  "created_by_work_id": "work0001",
+  "related_work_ids": ["work0002"],
+  "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "hash_algorithm": "sha256"
+}
