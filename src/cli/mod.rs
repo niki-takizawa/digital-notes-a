@@ -4,7 +4,7 @@ pub mod args;
 mod asset;
 mod card;
 mod check;
-mod editor;
+pub(crate) mod editor;
 mod evidence;
 mod work;
 

@@ -1,6 +1,7 @@
 //! TUI entry point, sharing Repository APIs with the CLI.
 
 mod catalog;
+mod editor;
 mod evidence;
 mod render;
 mod state;
@@ -30,6 +31,20 @@ pub(super) fn run(repo: &Repository) -> Result<(), Box<dyn Error>> {
                     Action::Refresh => app.refresh(repo),
                     Action::BeginEvidence => app.begin_evidence(repo),
                     Action::SaveEvidence => app.save_evidence(repo),
+                    Action::EditMarkdown => {
+                        if let Some(id) = app.selected_entry().map(|entry| entry.id.clone()) {
+                            let kind = app.kind;
+                            let suspended = editor::SuspendedTerminal::new()?;
+                            let result = editor::edit_selected(repo, kind, &id);
+                            suspended.resume()?;
+                            // The editor may have resized or completely repainted the terminal.
+                            terminal.clear()?;
+                            match result {
+                                Ok(outcome) => app.finish_edit(repo, kind, &id, outcome),
+                                Err(message) => app.message = format!("Editor: {message}"),
+                            }
+                        }
+                    }
                     Action::Continue => {}
                 },
                 _ => {}

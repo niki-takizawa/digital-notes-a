@@ -10,6 +10,7 @@ pub(super) enum Action {
     Refresh,
     BeginEvidence,
     SaveEvidence,
+    EditMarkdown,
     Quit,
 }
 
@@ -173,6 +174,9 @@ impl App {
                 }
                 Action::Continue
             }
+            KeyCode::Char('m') if self.view == View::Detail && self.kind != Kind::Asset => {
+                Action::EditMarkdown
+            }
             KeyCode::Char('e') if self.view == View::Detail && self.kind == Kind::Card => {
                 Action::BeginEvidence
             }
@@ -259,6 +263,29 @@ impl App {
             && self.catalog.find(kind, &id).is_some()
         {
             self.jump_to(kind, &id);
+        }
+    }
+
+    pub(super) fn finish_edit(
+        &mut self,
+        repo: &Repository,
+        kind: Kind,
+        id: &str,
+        outcome: super::editor::EditOutcome,
+    ) {
+        if outcome == super::editor::EditOutcome::Unchanged {
+            self.message = "Markdown unchanged".into();
+            return;
+        }
+        match Catalog::load(repo) {
+            Ok(catalog) => {
+                self.catalog = catalog;
+                self.jump_to(kind, id);
+                self.message = "Markdown saved".into();
+            }
+            Err(error) => {
+                self.message = format!("Markdown saved; catalog refresh failed: {error}");
+            }
         }
     }
 
@@ -411,6 +438,21 @@ mod tests {
         assert_eq!(app.kind, Kind::Card);
         assert_eq!(app.view, View::Related);
         assert!(app.message.contains("Missing target"));
+    }
+
+    #[test]
+    fn markdown_edit_is_only_available_for_work_and_card_details() {
+        let mut app = App::new(fixtures());
+        assert_eq!(app.on_key(key(KeyCode::Char('m'))), Action::Continue);
+        app.on_key(key(KeyCode::Enter));
+        assert_eq!(app.on_key(key(KeyCode::Char('m'))), Action::EditMarkdown);
+        app.on_key(key(KeyCode::Char('2')));
+        app.on_key(key(KeyCode::Enter));
+        assert_eq!(app.on_key(key(KeyCode::Char('m'))), Action::Continue);
+        app.on_key(key(KeyCode::Char('3')));
+        app.on_key(key(KeyCode::Enter));
+        assert_eq!(app.on_key(key(KeyCode::Char('m'))), Action::EditMarkdown);
+        assert_eq!(app.on_key(key(KeyCode::Char('e'))), Action::BeginEvidence);
     }
 
     #[test]

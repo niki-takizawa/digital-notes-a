@@ -114,9 +114,11 @@ pub(super) fn draw(frame: &mut Frame<'_>, app: &App) {
         let controls = match app.view {
             View::Browse => "1/2/3 Tab kind | ↑↓ select | Enter details",
             View::Detail if app.kind == super::catalog::Kind::Card => {
-                "↑↓ scroll | g relations | e evidence | b back | Esc list"
+                "↑↓ scroll | g relations | m edit Markdown | e evidence | b back | Esc list"
             }
-            View::Detail => "↑↓ scroll | g relations | b back | Esc list",
+            View::Detail => {
+                "↑↓ scroll | g relations | m edit Markdown (Work/Card) | b back | Esc list"
+            }
             View::Related => "↑↓ choose | Enter follow | Esc details",
             View::Evidence => super::evidence::controls(app),
         };
