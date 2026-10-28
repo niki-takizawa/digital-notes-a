@@ -1,9 +1,9 @@
 //! File-backed repository layout and storage primitives.
 //!
 //! Writers must use `Repository::begin_write` and keep the guard throughout
-//! validation and publication. Asset and Card operations are added in
-//! subsequent commits.
+//! validation and publication. Card operations are added in a later commit.
 
+mod asset;
 mod storage;
 mod work;
 
@@ -37,6 +37,7 @@ pub enum RepositoryError {
     InvalidLayout(PathBuf),
     InvalidPath(PathBuf),
     Conflict(PathBuf),
+    InvalidAsset(String),
     InvalidWork(String),
     Json {
         path: PathBuf,
@@ -53,6 +54,7 @@ impl fmt::Display for RepositoryError {
             Self::InvalidLayout(path) => write!(f, "invalid repository layout: {}", path.display()),
             Self::InvalidPath(path) => write!(f, "invalid managed path: {}", path.display()),
             Self::Conflict(path) => write!(f, "file changed since last read: {}", path.display()),
+            Self::InvalidAsset(message) => write!(f, "invalid Asset: {message}"),
             Self::InvalidWork(message) => write!(f, "invalid Work: {message}"),
             Self::Json { path, source } => {
                 write!(f, "invalid JSON at {}: {source}", path.display())
