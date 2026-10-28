@@ -3,6 +3,7 @@
 pub mod args;
 mod asset;
 mod card;
+mod check;
 mod editor;
 mod evidence;
 mod work;
@@ -27,6 +28,9 @@ pub fn run(cli: Cli) -> Result<(), Box<dyn Error>> {
         }
         Command::Work { command } => {
             work::run(&Repository::open(&root)?, command)?;
+        }
+        Command::Check { json } => {
+            check::run(&Repository::open(&root)?, json)?;
         }
         Command::Init => {
             let repository = Repository::init(&root)?;

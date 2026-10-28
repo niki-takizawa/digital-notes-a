@@ -23,6 +23,12 @@ pub struct Cli {
 pub enum Command {
     /// Initialize the repository directories without deleting existing data.
     Init,
+    /// Audit repository integrity and saved Evidence.
+    Check {
+        /// Emit a machine-readable report.
+        #[arg(long)]
+        json: bool,
+    },
     /// Capture and browse Assets.
     Asset {
         #[command(subcommand)]

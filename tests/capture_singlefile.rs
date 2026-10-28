@@ -110,12 +110,13 @@ printf '\377' > "$2"
 fn oversize_output_is_rejected() {
     let temp = TempDir::new().unwrap();
     let mock = executable(temp.path(), r#"printf '<html>oversize</html>' > "$2""#);
-    assert!(matches!(
-        SingleFileCapture::new(mock)
-            .with_max_bytes(10)
-            .capture(&url("https://example.org/")),
-        Err(CaptureError::TooLarge { limit: 10 })
-    ));
+    let result = SingleFileCapture::new(mock)
+        .with_max_bytes(10)
+        .capture(&url("https://example.org/"));
+    assert!(
+        matches!(result, Err(CaptureError::TooLarge { limit: 10 })),
+        "expected TooLarge with limit 10, got: {result:?}"
+    );
 }
 
 #[test]
