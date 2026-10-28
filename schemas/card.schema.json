@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:digital-notes:card:v1",
+  "title": "Digital Notes Card v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "entity_type",
+    "title",
+    "created",
+    "updated",
+    "card_type",
+    "created_by_work_id",
+    "source_work_ids",
+    "source_asset_ids",
+    "source_card_ids",
+    "evidence",
+    "body"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "id": {
+      "$ref": "#/$defs/id"
+    },
+    "entity_type": {
+      "const": "card"
+    },
+    "title": {
+      "$ref": "#/$defs/title"
+    },
+    "created": {
+      "$ref": "#/$defs/utc_datetime"
+    },
+    "updated": {
+      "$ref": "#/$defs/utc_datetime",
+      "description": "Modification time; starts equal to created."
+    },
+    "card_type": {
+      "$ref": "#/$defs/snake_case"
+    },
+    "created_by_work_id": {
+      "$ref": "#/$defs/id",
+      "description": "Existing Work that created this Card. Immutable after creation."
+    },
+    "source_work_ids": {
+      "$ref": "#/$defs/id_array",
+      "description": "Other Works referenced by this Card."
+    },
+    "source_asset_ids": {
+      "$ref": "#/$defs/id_array",
+      "description": "Assets cited or discussed by this Card; supports multiple Assets."
+    },
+    "source_card_ids": {
+      "$ref": "#/$defs/id_array"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "body": {
+      "type": "string",
+      "description": "Markdown source text, evidence references written as [^ev1]"
+    }
+  },
+  "$defs": {
+    "id_array": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/id"
+      },
+      "uniqueItems": true
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "snake_case": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "utc_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "asset_id",
+        "text_normalization",
+        "selector",
+        "position_selector"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^ev[1-9][0-9]*$"
+        },
+        "asset_id": {
+          "$ref": "#/$defs/id"
+        },
+        "selector": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "exact",
+            "prefix",
+            "suffix"
+          ],
+          "properties": {
+            "type": {
+              "const": "TextQuoteSelector"
+            },
+            "exact": {
+              "type": "string",
+              "minLength": 1
+            },
+            "prefix": {
+              "type": "string"
+            },
+            "suffix": {
+              "type": "string"
+            }
+          }
+        },
+        "text_normalization": {
+          "const": "html_text_v1",
+          "description": "Versioned canonical HTML-to-text normalization algorithm used for both selectors"
+        },
+        "position_selector": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "start",
+            "end"
+          ],
+          "properties": {
+            "type": {
+              "const": "TextPositionSelector"
+            },
+            "start": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "end": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{7,63}$",
+      "description": "Opaque filename-safe identifier (8–64 characters); generation algorithm is not fixed by this schema."
+    }
+  },
+  "description": "Markdown research note, created within an existing Work, with optional source Work/Asset/Card references and Evidence."
+}

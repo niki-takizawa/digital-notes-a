@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:digital-notes:asset:v1",
+  "title": "Digital Notes Asset v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "entity_type",
+    "title",
+    "created",
+    "updated",
+    "asset_type",
+    "url",
+    "file_format",
+    "capture_method",
+    "created_by_work_id",
+    "related_work_ids",
+    "content_hash",
+    "hash_algorithm"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "id": {
+      "$ref": "#/$defs/id"
+    },
+    "entity_type": {
+      "const": "asset"
+    },
+    "title": {
+      "$ref": "#/$defs/title"
+    },
+    "created": {
+      "$ref": "#/$defs/utc_datetime"
+    },
+    "updated": {
+      "$ref": "#/$defs/utc_datetime",
+      "description": "Metadata modification time; HTML snapshot bytes are immutable."
+    },
+    "asset_type": {
+      "$ref": "#/$defs/snake_case"
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://"
+    },
+    "file_format": {
+      "const": "html"
+    },
+    "capture_method": {
+      "$ref": "#/$defs/snake_case"
+    },
+    "created_by_work_id": {
+      "$ref": "#/$defs/id",
+      "description": "Existing Work that created this Asset. Immutable after creation."
+    },
+    "related_work_ids": {
+      "$ref": "#/$defs/id_array",
+      "description": "Additional Work references (excluding created_by_work_id); may be updated."
+    },
+    "content_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 hash of raw bytes of assets/<id>.html."
+    },
+    "hash_algorithm": {
+      "const": "sha256"
+    }
+  },
+  "$defs": {
+    "id_array": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/id"
+      },
+      "uniqueItems": true
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "snake_case": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "utc_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{7,63}$",
+      "description": "Opaque filename-safe identifier (8–64 characters); generation algorithm is not fixed by this schema."
+    }
+  },
+  "description": "JSON sidecar for immutable SingleFile HTML snapshot; creator Work exists before capture."
+}

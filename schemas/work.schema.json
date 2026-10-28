@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:digital-notes:work:v1",
+  "title": "Digital Notes Work v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "entity_type",
+    "title",
+    "created",
+    "updated",
+    "work_type",
+    "status",
+    "source_work_ids",
+    "body"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "id": {
+      "$ref": "#/$defs/id"
+    },
+    "entity_type": {
+      "const": "work"
+    },
+    "title": {
+      "$ref": "#/$defs/title"
+    },
+    "created": {
+      "$ref": "#/$defs/utc_datetime"
+    },
+    "updated": {
+      "$ref": "#/$defs/utc_datetime",
+      "description": "Modification time; starts equal to created."
+    },
+    "work_type": {
+      "$ref": "#/$defs/snake_case",
+      "description": "Open vocabulary; legacy values include source_collection, create_cards_from_assets"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "done"
+      ],
+      "description": "Lifecycle state; both transitions active <-> done are permitted."
+    },
+    "source_work_ids": {
+      "$ref": "#/$defs/id_array"
+    },
+    "body": {
+      "type": "string",
+      "description": "Markdown source text (not HTML)"
+    }
+  },
+  "$defs": {
+    "id_array": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/id"
+      },
+      "uniqueItems": true
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "snake_case": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "utc_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{7,63}$",
+      "description": "Opaque filename-safe identifier (8–64 characters); generation algorithm is not fixed by this schema."
+    }
+  },
+  "description": "Work log. Create a Work before capturing Assets or creating Cards associated with it."
+}
