@@ -23,6 +23,11 @@ pub struct Cli {
 pub enum Command {
     /// Initialize the repository directories without deleting existing data.
     Init,
+    /// Manage Work logs.
+    Work {
+        #[command(subcommand)]
+        command: super::work::WorkCommand,
+    },
 }
 
 #[cfg(test)]

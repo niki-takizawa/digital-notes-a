@@ -1,6 +1,8 @@
 //! CLI dispatch. Entity commands are added in subsequent commits.
 
 pub mod args;
+mod editor;
+mod work;
 
 use args::{Cli, Command};
 use digital_notes::repository::Repository;
@@ -14,6 +16,9 @@ pub fn run(cli: Cli) -> Result<(), Box<dyn Error>> {
     };
 
     match cli.command {
+        Command::Work { command } => {
+            work::run(&Repository::open(&root)?, command)?;
+        }
         Command::Init => {
             let repository = Repository::init(&root)?;
             println!(

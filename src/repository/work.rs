@@ -124,3 +124,31 @@ impl Repository {
         })
     }
 }
+
+impl Repository {
+    /// Enumerate valid Work filenames, checking each Work during loading.
+    /// Unrelated files are ignored; corrupt Work JSON is reported as an error.
+    pub fn list_works(&self) -> Result<Vec<Work>> {
+        let directory = self.root().join("works");
+        let entries =
+            std::fs::read_dir(&directory).map_err(|error| super::io_at(&directory, error))?;
+        let mut works = Vec::new();
+        for entry in entries {
+            let entry = entry.map_err(|error| super::io_at(&directory, error))?;
+            let path = entry.path();
+            if path.extension().and_then(|ext| ext.to_str()) != Some("json") {
+                continue;
+            }
+            let Some(id) = path
+                .file_stem()
+                .and_then(|stem| stem.to_str())
+                .and_then(|stem| stem.parse::<WorkId>().ok())
+            else {
+                continue;
+            };
+            works.push(self.load_work(&id)?.value);
+        }
+        works.sort_by(|a, b| a.title.as_str().cmp(b.title.as_str()).then(a.id.cmp(&b.id)));
+        Ok(works)
+    }
+}
