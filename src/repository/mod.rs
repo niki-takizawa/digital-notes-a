@@ -1,10 +1,11 @@
 //! File-backed repository layout and storage primitives.
 //!
 //! Writers must use `Repository::begin_write` and keep the guard throughout
-//! validation and publication. Work, Asset and Card operations are added in
+//! validation and publication. Asset and Card operations are added in
 //! subsequent commits.
 
 mod storage;
+mod work;
 
 use crate::model::{AssetId, CardId, WorkId};
 use std::{
@@ -16,16 +17,31 @@ use std::{
 
 pub use storage::{LoadedBytes, Revision, WriteGuard};
 
+/// A decoded entity together with the revision required for safe updates.
+#[derive(Debug)]
+pub struct Loaded<T> {
+    pub value: T,
+    pub revision: Revision,
+}
+
 pub type Result<T> = std::result::Result<T, RepositoryError>;
 
 #[derive(Debug)]
 pub enum RepositoryError {
-    Io { path: PathBuf, source: io::Error },
+    Io {
+        path: PathBuf,
+        source: io::Error,
+    },
     NotFound(PathBuf),
     AlreadyExists(PathBuf),
     InvalidLayout(PathBuf),
     InvalidPath(PathBuf),
     Conflict(PathBuf),
+    InvalidWork(String),
+    Json {
+        path: PathBuf,
+        source: serde_json::Error,
+    },
 }
 
 impl fmt::Display for RepositoryError {
@@ -37,6 +53,10 @@ impl fmt::Display for RepositoryError {
             Self::InvalidLayout(path) => write!(f, "invalid repository layout: {}", path.display()),
             Self::InvalidPath(path) => write!(f, "invalid managed path: {}", path.display()),
             Self::Conflict(path) => write!(f, "file changed since last read: {}", path.display()),
+            Self::InvalidWork(message) => write!(f, "invalid Work: {message}"),
+            Self::Json { path, source } => {
+                write!(f, "invalid JSON at {}: {source}", path.display())
+            }
         }
     }
 }
@@ -45,6 +65,7 @@ impl StdError for RepositoryError {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
         match self {
             Self::Io { source, .. } => Some(source),
+            Self::Json { source, .. } => Some(source),
             _ => None,
         }
     }
